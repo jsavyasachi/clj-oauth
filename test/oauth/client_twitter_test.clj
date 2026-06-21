@@ -11,12 +11,14 @@
                                 "https://api.twitter.com/oauth/authorize"
                                 :hmac-sha1))
 (deftest
+    ^:integration
     #^{:doc "Test requesting a token from Twitter.
             Considered to pass if no exception is thrown."}
     hmac-sha1-request-token-test
   (oc/request-token consumer-hmac-sha1))
 
 (deftest
+    ^:integration
     #^{:doc "Considered to pass if no exception is thrown."}
     hmac-sha1-user-approval-uri-test
   (is (instance? String (oc/user-approval-uri consumer-hmac-sha1 (:oauth_token (oc/request-token consumer-hmac-sha1))))))
@@ -28,12 +30,14 @@
                                   "https://api.twitter.com/oauth/authorize"
                                   :hmac-sha256))
 (deftest
+    ^:integration
     #^{:doc "Test requesting a token from Twitter.
             Considered to pass if no exception is thrown."}
     hmac-sha256-request-token-test
   (oc/request-token consumer-hmac-sha256))
 
 (deftest
+    ^:integration
     #^{:doc "Considered to pass if no exception is thrown."}
     hmac-sha256-user-approval-uri-test
   (is (instance? String (oc/user-approval-uri consumer-hmac-sha256 (:oauth_token (oc/request-token consumer-hmac-sha256))))))

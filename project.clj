@@ -8,4 +8,7 @@
                  [commons-codec/commons-codec "1.15"]
                  [org.bouncycastle/bcprov-jdk15on "1.70"]
                  [org.bouncycastle/bcpkix-jdk15on "1.70"]
-                 [clj-http "3.12.3"]])
+                 [clj-http "3.12.3"]]
+  :test-selectors {:default (complement :integration)
+                   :integration :integration
+                   :all (constantly true)})
