@@ -15,13 +15,13 @@ HMAC-SHA256 support and moves onto current, security-supported dependencies
 Leiningen:
 
 ``` clojure
-[net.clojars.savya/clj-oauth "1.5.6"]
+[net.clojars.savya/clj-oauth "1.6.0"]
 ```
 
 deps.edn:
 
 ``` clojure
-net.clojars.savya/clj-oauth {:mvn/version "1.5.6"}
+net.clojars.savya/clj-oauth {:mvn/version "1.6.0"}
 ```
 
 # Building #
@@ -45,7 +45,8 @@ everything).
     ;; Register an application at Twitter (https://dev.twitter.com/apps/new)
     ;; to obtain a Consumer token and token secret.
     ;; The signature method may be :hmac-sha1 (default), :hmac-sha256,
-    ;; :rsa-sha1, or :plaintext.
+    ;; :rsa-sha1, :rsa-sha256, or :plaintext. RSA private keys may be in
+    ;; PKCS#1 or PKCS#8 PEM format.
     (def consumer (oauth/make-consumer <consumer-token>
                                        <consumer-token-secret>
                                        "https://api.twitter.com/oauth/request_token"

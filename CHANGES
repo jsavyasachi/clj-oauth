@@ -1,3 +1,12 @@
+* 1.6.0
+
+- Add the RSA-SHA256 signature method (:rsa-sha256). RSA-SHA1 remains
+  supported but SHA-1 is deprecated for signatures; modern providers expect
+  SHA-256.
+- RSA signing now accepts PKCS#8 private keys (-----BEGIN PRIVATE KEY-----)
+  in addition to PKCS#1 (-----BEGIN RSA PRIVATE KEY-----). PKCS#8 is the
+  default output of current OpenSSL and most key tooling.
+
 * 1.5.6
 
 - First release as net.clojars.savya/clj-oauth, a maintained fork of
