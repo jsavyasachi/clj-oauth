@@ -1,3 +1,15 @@
+* 1.5.6
+
+- First release as net.clojars.savya/clj-oauth, a maintained fork of
+  drone29a/clj-oauth.
+- Release the HMAC-SHA256 signature support that had been merged to master but
+  never published. Fixes #58.
+- BouncyCastle bcprov/bcpkix-jdk15on 1.70 -> jdk18on 1.80. The jdk15on line is
+  retired; 1.70 carried CVE-2023-33201 and the 2024 BC advisories.
+- commons-codec 1.15 -> 1.18.0, clj-http 3.12.3 -> 3.13.1.
+- Clojure 1.10.3 -> 1.12.0 (provided), tested across 1.10/1.11/1.12.
+- Zero reflection warnings; GitHub Actions CI across JDK 11/17/21.
+
 * 1.5.5
 
 - The user-approval-uri function now supports adding paramerers to the user approval URI. (danielsz)
