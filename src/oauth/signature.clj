@@ -103,7 +103,7 @@
 (defn url-encode
   "The java.net.URLEncoder class encodes for application/x-www-form-urlencoded, but OAuth
 requires RFC 3986 encoding."
-  [s]
+  [^String s]
   (-> (java.net.URLEncoder/encode s "UTF-8")
       (.replace "+" "%20")
       (.replace "*" "%2A")
@@ -112,7 +112,7 @@ requires RFC 3986 encoding."
 (defn url-decode
   "The java.net.URLEncoder class encodes for application/x-www-form-urlencoded, but OAuth
 requires RFC 3986 encoding."
-  [s]
+  [^String s]
   (java.net.URLDecoder/decode s "UTF-8"))
 
 (defn oauth-params
