@@ -33,15 +33,9 @@ net.clojars.savya/clj-oauth {:mvn/version "1.5.6"}
 `lein test` runs the deterministic unit tests (no credentials or network required).
 
 The live Twitter integration tests are tagged `^:integration` and skipped by
-default. To run them, put real consumer credentials in
-`test/oauth/twitter_keys.clj`:
-
-``` clojure
-(def key "your-consumer-key")
-(def secret "your-consumer-secret")
-```
-
-then run `lein test :integration` (or `lein test :all` for everything).
+default. To run them, set `TWITTER_CONSUMER_KEY` and `TWITTER_CONSUMER_SECRET`
+in the environment and run `lein test :integration` (or `lein test :all` for
+everything).
 
 # Client Example #
 ``` clojure
