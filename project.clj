@@ -6,6 +6,6 @@
   :description "OAuth support for Clojure"
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [commons-codec/commons-codec "1.15"]
-                 [org.bouncycastle/bcprov-jdk15on "1.70"]
-                 [org.bouncycastle/bcpkix-jdk15on "1.70"]
+                 [org.bouncycastle/bcprov-jdk18on "1.80"]
+                 [org.bouncycastle/bcpkix-jdk18on "1.80"]
                  [clj-http "3.12.3"]])
