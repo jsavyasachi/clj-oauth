@@ -36,6 +36,7 @@
 (def signature-methods {:hmac-sha1 "HMAC-SHA1"
                         :hmac-sha256 "HMAC-SHA256"
                         :rsa-sha1 "RSA-SHA1"
+                        :rsa-sha256 "RSA-SHA256"
                         :plaintext "PLAINTEXT"})
 
 (defn url-form-encode [params]
@@ -79,22 +80,42 @@
   (doto (JcaPEMKeyConverter.)
     (.setProvider "BC")))
 
-(defmethod sign :rsa-sha1
-  [c ^String base-string & [token-secret]]
+(defn- rsa-private-key
+  "Read an RSA private key from a PEM string, accepting both PKCS#1
+  (-----BEGIN RSA PRIVATE KEY-----) and PKCS#8 (-----BEGIN PRIVATE KEY-----)."
+  ^java.security.PrivateKey [^String pem]
+  (let [obj (-> pem
+                java.io.StringReader.
+                org.bouncycastle.openssl.PEMParser.
+                .readObject)]
+    (condp instance? obj
+      org.bouncycastle.openssl.PEMKeyPair
+      (.getPrivate (.getKeyPair ^JcaPEMKeyConverter pem-converter
+                                ^org.bouncycastle.openssl.PEMKeyPair obj))
+
+      org.bouncycastle.asn1.pkcs.PrivateKeyInfo
+      (.getPrivateKey ^JcaPEMKeyConverter pem-converter
+                      ^org.bouncycastle.asn1.pkcs.PrivateKeyInfo obj)
+
+      (throw (IllegalArgumentException.
+              (str "Unsupported RSA private key PEM, expected a PKCS#1 or PKCS#8 "
+                   "key but parsed " (some-> obj class .getName)))))))
+
+(defn- rsa-sign [^String jca-algorithm c ^String base-string]
   (java.security.Security/addProvider
     (org.bouncycastle.jce.provider.BouncyCastleProvider.))
-  (let [key-pair (-> (:secret c)
-                     java.io.StringReader.
-                     org.bouncycastle.openssl.PEMParser.
-                     .readObject)
-        private-key (-> ^JcaPEMKeyConverter pem-converter
-                        (.getKeyPair key-pair)
-                        .getPrivate)
-        signer (doto (java.security.Signature/getInstance "SHA1withRSA" "BC")
-                 (.initSign private-key (java.security.SecureRandom.))
-                 (.update (.getBytes base-string)))
-        raw-sig (.sign signer)]
-    (String. (Base64/encodeBase64 raw-sig))))
+  (let [signer (doto (java.security.Signature/getInstance jca-algorithm "BC")
+                 (.initSign (rsa-private-key (:secret c)) (java.security.SecureRandom.))
+                 (.update (.getBytes base-string)))]
+    (String. (Base64/encodeBase64 (.sign signer)))))
+
+(defmethod sign :rsa-sha1
+  [c ^String base-string & [token-secret]]
+  (rsa-sign "SHA1withRSA" c base-string))
+
+(defmethod sign :rsa-sha256
+  [c ^String base-string & [token-secret]]
+  (rsa-sign "SHA256withRSA" c base-string))
 
 (defn verify [sig c base-string & [token-secret]]
   (let [token-secret (url-encode (or token-secret ""))]
