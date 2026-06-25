@@ -7,9 +7,9 @@
   :scm {:name "git"
         :url "https://github.com/jsavyasachi/clj-oauth"}
   :global-vars {*warn-on-reflection* true}
-  :dependencies [[commons-codec/commons-codec "1.18.0"]
-                 [org.bouncycastle/bcprov-jdk18on "1.80"]
-                 [org.bouncycastle/bcpkix-jdk18on "1.80"]
+  :dependencies [[commons-codec/commons-codec "1.22.0"]
+                 [org.bouncycastle/bcprov-jdk18on "1.84"]
+                 [org.bouncycastle/bcpkix-jdk18on "1.84"]
                  [clj-http "3.13.1"]]
   :profiles {:provided {:dependencies [[org.clojure/clojure "1.12.0"]]}
              :clojure-1-10 {:dependencies [[org.clojure/clojure "1.10.3"]]}
