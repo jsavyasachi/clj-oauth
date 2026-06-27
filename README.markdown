@@ -112,3 +112,10 @@ Designed and developed by Matt Revelle.
 Contributions from Richard Newman.
 
 Maintenance fork (2026) by Savyasachi; original: [https://github.com/drone29a/clj-oauth](https://github.com/drone29a/clj-oauth).
+
+## License
+
+Copyright © 2009 Matt Revelle.
+
+Maintenance fork (2026) by Savyasachi, original: https://github.com/drone29a/clj-oauth.
+Distributed under the [BSD 2-Clause License](https://opensource.org/licenses/BSD-2-Clause), preserving the original license.
