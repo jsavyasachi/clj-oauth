@@ -11,6 +11,12 @@ published as `net.clojars.savya/clj-oauth`. It releases the previously unrelease
 HMAC-SHA256 support and moves onto current, security-supported dependencies
 (BouncyCastle `jdk18on`, clj-http 3.13, Clojure 1.12).
 
+## Stack
+
+<a href="https://clojure.org"><img src="https://img.shields.io/badge/Clojure-5881D8?style=flat&logo=clojure&logoColor=fff" alt="Clojure" /></a>
+<a href="https://github.com/dakrone/clj-http"><img src="https://img.shields.io/badge/clj--http-5881D8?style=flat&logo=clojure&logoColor=fff" alt="clj-http" /></a>
+<a href="https://www.bouncycastle.org"><img src="https://img.shields.io/badge/Bouncy%20Castle-2D3748?style=flat" alt="Bouncy Castle" /></a>
+
 # Installing #
 
 Leiningen:
