@@ -1,5 +1,0 @@
-- Support request-tokens in oauth_wrap
-- link up access token request
-- Authorize WS
-- Revoke WS
-- Nonce checking
