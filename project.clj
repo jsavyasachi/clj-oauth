@@ -1,4 +1,4 @@
-(defproject net.clojars.savya/clj-oauth "1.6.0"
+(defproject net.clojars.savya/clj-oauth "1.6.1"
   :url "https://github.com/jsavyasachi/clj-oauth"
   :license {:name "Simplified BSD License"
             :url "https://opensource.org/licenses/BSD-2-Clause"

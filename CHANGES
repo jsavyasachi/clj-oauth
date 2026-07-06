@@ -1,3 +1,7 @@
+* 1.6.1
+
+- Bump commons-codec 1.18.0 -> 1.22.0, bouncycastle bcprov/bcpkix 1.80 -> 1.84 (weekly antq).
+
 * 1.6.0
 
 - Add the RSA-SHA256 signature method (:rsa-sha256). RSA-SHA1 remains
