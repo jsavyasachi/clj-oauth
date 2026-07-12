@@ -7,3 +7,5 @@ test/oauth/twitter_keys.clj
 *.jar
 pom.xml
 .lein-*
+.cpcache/
+target/
