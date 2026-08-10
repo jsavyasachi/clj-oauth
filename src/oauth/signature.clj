@@ -24,7 +24,7 @@
 (def secure-random (java.security.SecureRandom/getInstance "SHA1PRNG"))
 
 (defn rand-str
-  "Random string for OAuth requests."
+  "Make a random string for OAuth requests."
   [length]
   (. (new BigInteger (int (* 5 length)) ^java.util.Random secure-random) toString 32))
 
@@ -122,7 +122,7 @@
     (= sig (sign c base-string token-secret))))
 
 (defn url-encode
-  "The java.net.URLEncoder class encodes for application/x-www-form-urlencoded, but OAuth
+  "The java.net.URLEncoder class encodes application/x-www-form-urlencoded. OAuth
 requires RFC 3986 encoding."
   [^String s]
   (-> (java.net.URLEncoder/encode s "UTF-8")
@@ -131,13 +131,13 @@ requires RFC 3986 encoding."
       (.replace "%7E" "~")))
 
 (defn url-decode
-  "The java.net.URLEncoder class encodes for application/x-www-form-urlencoded, but OAuth
+  "The java.net.URLEncoder class encodes application/x-www-form-urlencoded. OAuth
 requires RFC 3986 encoding."
   [^String s]
   (java.net.URLDecoder/decode s "UTF-8"))
 
 (defn oauth-params
-  "Build a map of parameters needed for OAuth requests."
+  "Build a map of parameters for OAuth requests."
   ([consumer nonce timestamp]
      {:oauth_consumer_key (:key consumer)
       :oauth_signature_method (signature-methods (:signature-method consumer))

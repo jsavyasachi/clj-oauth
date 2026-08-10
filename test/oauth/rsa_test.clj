@@ -55,7 +55,7 @@
     (is (rsa-verifies? "SHA256withRSA" base-string s))))
 
 (deftest rsa-sha1-pkcs8-signature
-  ;; PKCS#8 keys must also work with the existing rsa-sha1 method.
+  ;; PKCS#8 keys must work with the existing rsa-sha1 method.
   (let [s (sig/sign {:secret pkcs8-key :signature-method :rsa-sha1} base-string)]
     (is (rsa-verifies? "SHA1withRSA" base-string s))))
 

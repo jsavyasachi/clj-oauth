@@ -13,7 +13,7 @@
                             "https://api.twitter.com/oauth/access_token"
                             "https://api.twitter.com/oauth/authorize"
                             :hmac-sha1)
-        ;; Ensure that the params from Twitter example are used.
+        ;; Use the params from the Twitter example.
         unsigned-params (merge (sig/oauth-params c "QP70eNmVz8jvdPevU3oJD2AfF7R7odC2XJcn4XlZJqk" 1272323042)
                                {:oauth_callback "http://localhost:3005/the_dance/process_callback?service_provider_id=11"
                                 :oauth_consumer_key "GDdmIQH6jhtmLUypg82g"
@@ -24,7 +24,7 @@
                                                unsigned-params))
         params (assoc unsigned-params
                  :oauth_signature signature)]
-    ;; Can't easily test this since params are in undefined order in header.
+    ;; Do not test this because params have an undefined order in the header.
     (is (= (oc/authorization-header (sort params))
            "OAuth oauth_callback=\"http%3A%2F%2Flocalhost%3A3005%2Fthe_dance%2Fprocess_callback%3Fservice_provider_id%3D11\", oauth_consumer_key=\"GDdmIQH6jhtmLUypg82g\", oauth_nonce=\"QP70eNmVz8jvdPevU3oJD2AfF7R7odC2XJcn4XlZJqk\", oauth_signature=\"8wUi7m5HFQy76nowoCThusfgB%2BQ%3D\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\"1272323042\", oauth_version=\"1.0\""))))
 
@@ -36,7 +36,7 @@
                             "https://api.twitter.com/oauth/access_token"
                             "https://api.twitter.com/oauth/authorize"
                             :hmac-sha1)
-        ;; Ensure that the params from Twitter example are used.
+        ;; Use the params from the Twitter example.
         unsigned-params (merge (sig/oauth-params c "9zWH6qe0qG7Lc1telCn7FhUbLyVdjEaL3MO5uHxn8" 1272323047)
                                {:oauth_consumer_key "GDdmIQH6jhtmLUypg82g"
                                 :oauth_signature_method "HMAC-SHA1"
@@ -62,7 +62,7 @@
                             "https://api.twitter.com/oauth/authorize"
                             :hmac-sha1)
         t "nnch734d00sl2jdk"]
-    ;; The approval URL should only use the :oauth_token in the User approval URI
+    ;; The approval URL uses only :oauth_token in the User approval URI.
     (is (= "https://api.twitter.com/oauth/authorize?oauth_token=nnch734d00sl2jdk"
            (oc/user-approval-uri c t)))
     (is (= "https://api.twitter.com/oauth/authorize?oauth_token=nnch734d00sl2jdk&extra=foo"

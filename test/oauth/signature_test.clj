@@ -92,7 +92,7 @@
          "POST&http%3A%2F%2Fapi.twitter.com%2F1%2Fstatuses%2Fupdate.json&oauth_consumer_key%3DGDdmIQH6jhtmLUypg82g%26oauth_nonce%3DoElnnMTQIZvqvlfXM56aBLAf5noGD0AQR3Fmi7Q6Y%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1272325550%26oauth_token%3D819797-Jxq8aYUDRmykzVKrgoLhXSq67TEa5ruc4GJC2rWimw%26oauth_version%3D1.0%26status%3Dsetting%2520up%2520my%2520twitter%2520%25E7%25A7%2581%25E3%2581%25AE%25E3%2581%2595%25E3%2581%2588%25E3%2581%259A%25E3%2582%258A%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B")))
 
 (deftest 
-    #^{:doc "Test hmac-sha1 signing of a request."} 
+    #^{:doc "Test hmac-sha1 signatures for a request."}
   hmac-sha1-signature
 
   (is (= (sig/sign {:key "dpf43f3p2l4k3l03"
@@ -111,7 +111,7 @@
                    "pfkkdhi9sl3r4s00")
          "tR3+Ty81lMeYAr/Fid0kMTYa/WM="))
 
-  ;; Taken from Twitter dev example.
+  ;; This comes from the Twitter development example.
   (is (= (sig/sign {:signature-method :hmac-sha1
                     :secret "MCD8BKwGdgPHvAuvgvz4EQpqDAtx89grbuNMRd7Eh98"}
                    (sig/base-string "POST"
@@ -153,7 +153,7 @@
          "yOahq5m0YjDDjfjxHaXEsW9D+X0=")))
 
 (deftest
-  #^{:doc "Test hmac-sha256 signing of a request."}
+  #^{:doc "Test hmac-sha256 signatures for a request."}
   hmac-sha256-signature
 
   (is (= (sig/sign {:key "dpf43f3p2l4k3l03"
@@ -172,7 +172,7 @@
                    "pfkkdhi9sl3r4s00")
          "WVPzl1j6ZsnkIjWr7e3OZ3jkenL57KwaLFhYsroX1hg="))
 
-  ;; Taken from Twitter dev example.
+  ;; This comes from the Twitter development example.
   (is (= (sig/sign {:signature-method :hmac-sha256
                     :secret "MCD8BKwGdgPHvAuvgvz4EQpqDAtx89grbuNMRd7Eh98"}
                    (sig/base-string "POST"
@@ -255,7 +255,7 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPwrtgkaYAbp/xzfBzcsZR/ADW1ZVsRG
                      "hdhd0244k9j7ao03")))))
 
 (deftest
-    #^{:doc "test plaintext signatures"}
+    #^{:doc "Test plaintext signatures."}
   plaintext-signature
   (let [c {:key "dpf43f3p2l4k3l03"
            :secret "kd94hf93k423kf44"
@@ -282,7 +282,7 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPwrtgkaYAbp/xzfBzcsZR/ADW1ZVsRG
                                                          "hdhd0244k9j7ao03")))))
 
 (deftest 
-    #^{:doc "Test verification of signed request."} 
+    #^{:doc "Test verification of a signed request."}
   verify
   (let [c { :key "dpf43f3p2l4k3l03"
            :secret "kd94hf93k423kf44"
@@ -346,7 +346,7 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPwrtgkaYAbp/xzfBzcsZR/ADW1ZVsRG
   (is (= (sig/url-decode "%E3%80%81")   "\u3001")))
 
 (deftest  
-    #^{:doc "url form encode"}
+    #^{:doc "Test url-form-encode."}
   url-form-encode
   (is (= (sig/url-form-encode {}) ""))
   (is (= (sig/url-form-encode {"hello" "there"}) "hello=there"))
@@ -357,4 +357,3 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPwrtgkaYAbp/xzfBzcsZR/ADW1ZVsRG
 
   (is (= (sig/url-form-encode {:hello "there"}) "hello=there"))
   (is (= (sig/url-form-encode (sort {:hello "there" :name "Bill Smith" })) "hello=there&name=Bill%20Smith")))
-

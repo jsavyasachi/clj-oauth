@@ -3,7 +3,7 @@
            (javax.crypto.spec SecretKeySpec)))
 
 (defn hmac-sign
-  "Calculate HMAC signature for given data."
+  "Calculate an HMAC signature for the data."
   [^String key ^String data ^String hmac-algo]
   (let [signing-key (SecretKeySpec. (.getBytes key) hmac-algo)
         mac (doto (Mac/getInstance hmac-algo) (.init signing-key))]

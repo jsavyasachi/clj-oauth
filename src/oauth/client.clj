@@ -22,8 +22,8 @@
           signature-method))
 
 (defn user-approval-uri
-  "Builds the URI to the Service Provider where the User will be prompted
-to approve the Consumer's access to their account. A map of extra parameters may be included."
+  "Build the URI for the Service Provider. The User approves the Consumer's
+access to the User's account there. You can include extra parameters in a map."
   ([consumer token]
    (user-approval-uri consumer token {}))
   ([consumer token extra-params]
@@ -31,7 +31,7 @@ to approve the Consumer's access to their account. A map of extra parameters may
         "?" (httpclient/generate-query-string (merge {:oauth_token token} extra-params)))))
 
 (defn authorization-header
-  "OAuth credentials formatted for the Authorization HTTP header."
+  "Format OAuth credentials for the Authorization HTTP header."
   ([oauth-params]
      (str "OAuth "
           (join ", "
@@ -43,7 +43,7 @@ to approve the Consumer's access to their account. A map of extra parameters may
      (authorization-header (assoc oauth-params :realm realm))))
 
 (defn form-decode
-  "Parse form-encoded bodies from OAuth responses."
+  "Parse form-encoded bodies in OAuth responses."
   [s]
   (if s
     (into {}
@@ -63,7 +63,7 @@ to approve the Consumer's access to their account. A map of extra parameters may
       m)))
 
 (defn build-request
-  "Construct request from prepared paramters."
+  "Build a request from prepared parameters."
   [oauth-params & [form-params]]
   (let [req (merge
              {:headers {"Authorization" (authorization-header
@@ -77,9 +77,9 @@ to approve the Consumer's access to their account. A map of extra parameters may
            (httpclient/post url req)))))
 
 (defn credentials
-  "Return authorization credentials needed for access to protected resources.
-The key-value pairs returned as a map will need to be added to the
-Authorization HTTP header or added as query parameters to the request."
+  "Return authorization credentials for protected resources. The returned map
+contains key-value pairs. Add them to the Authorization HTTP header or as query
+parameters in the request."
   ([consumer token token-secret request-method request-uri & [request-params]]
      (let [unsigned-oauth-params (sig/oauth-params consumer
                                                    (sig/rand-str 30)
@@ -97,7 +97,7 @@ Authorization HTTP header or added as query parameters to the request."
        (assoc unsigned-oauth-params :oauth_signature signature))))
 
 (defn build-oauth-token-request
-  "Used to build actual OAuth request."
+  "Build an OAuth request."
   ([consumer uri unsigned-oauth-params & [extra-params token-secret]]
      (let [signature (sig/sign consumer
                                (sig/base-string "POST" uri (merge unsigned-oauth-params extra-params))
@@ -106,7 +106,7 @@ Authorization HTTP header or added as query parameters to the request."
        (build-request oauth-params extra-params))))
 
 (defn request-token
-  "Fetch request token for the consumer."
+  "Get a request token for the Consumer."
   ([consumer]
      (request-token consumer "oob" nil))
   ([consumer callback-uri]
@@ -124,8 +124,8 @@ Authorization HTTP header or added as query parameters to the request."
 
 (defn access-token
   "Exchange a request token for an access token.
-  When provided with two arguments, this function operates as per OAuth 1.0.
-  With three arguments, a verifier is used."
+  With two arguments, this function follows OAuth 1.0.
+  With three arguments, it uses a verifier."
   ([consumer request-token]
      (access-token consumer request-token nil))
   ([consumer request-token verifier]
@@ -191,7 +191,7 @@ Authorization HTTP header or added as query parameters to the request."
                                                            (:oauth_token_secret expired-token))))))
 
 (defn xauth-access-token
-  "Request an access token with a username and password with xAuth."
+  "Request an xAuth access token with a username and password."
   [consumer username password]
   (post-request-body-decoded (:access-uri consumer)
                              (build-xauth-access-token-request consumer

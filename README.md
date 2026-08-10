@@ -6,10 +6,10 @@
 
 `clj-oauth` provides [OAuth](http://oauth.net) client support for Clojure programs.
 
-This is a maintained fork of [drone29a/clj-oauth](https://github.com/drone29a/clj-oauth),
-published as `net.clojars.savya/clj-oauth`. It releases the previously unreleased
-HMAC-SHA256 support and moves onto current, security-supported dependencies
-(BouncyCastle `jdk18on`, clj-http 3.13, Clojure 1.12).
+This maintained fork of [drone29a/clj-oauth](https://github.com/drone29a/clj-oauth) is
+published as `net.clojars.savya/clj-oauth`. It includes unreleased HMAC-SHA256
+support. It uses current dependencies with security support: BouncyCastle `jdk18on`,
+clj-http 3.13, and Clojure 1.12.
 
 ## Stack
 
@@ -53,8 +53,8 @@ clojure -T:build deploy
 clojure -M:test
 ```
 
-This runs the deterministic unit tests without credentials or network access.
-The live Twitter tests are tagged `^:integration` and skipped by default.
+This runs deterministic unit tests without credentials or network access.
+Live Twitter tests have the `^:integration` tag and do not run by default.
 
 ## Client example
 
@@ -95,12 +95,12 @@ Development funded by LikeStream LLC (Don Jackson and Shirish Andhare).
 
 Designed and developed by Matt Revelle. Contributions from Richard Newman.
 
-Maintenance fork (2026) by Savyasachi; original:
+Savyasachi maintains this fork (2026). The original is:
 [drone29a/clj-oauth](https://github.com/drone29a/clj-oauth).
 
 ## License
 
 Copyright © 2009 Matt Revelle.
 
-Distributed under the [BSD 2-Clause License](https://opensource.org/licenses/BSD-2-Clause),
-preserving the original license.
+Distributed under the [BSD 2-Clause License](https://opensource.org/licenses/BSD-2-Clause).
+This preserves the original license.
