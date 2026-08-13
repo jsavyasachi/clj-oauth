@@ -31,7 +31,7 @@ The bar for a mergeable change:
 - Follow [Conventional Commits](https://www.conventionalcommits.org/)
   (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:` …).
 - Keep the subject in the imperative mood and under ~72 characters.
-- Update `CHANGES.md` / `CHANGELOG.md` if users can see your change.
+- Update `CHANGELOG.md` if users can see your change.
 - Rebase on the latest `main` before opening the pull request.
 
 ## License
