@@ -357,3 +357,18 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPwrtgkaYAbp/xzfBzcsZR/ADW1ZVsRG
 
   (is (= (sig/url-form-encode {:hello "there"}) "hello=there"))
   (is (= (sig/url-form-encode (sort {:hello "there" :name "Bill Smith" })) "hello=there&name=Bill%20Smith")))
+
+(deftest base-string-normalizes-request-uri
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&status%3Dok"
+         (sig/base-string "GET"
+                          "HTTPS://EXAMPLE.COM:443/resource?ignored=true#fragment"
+                          {:status "ok"}))))
+
+(deftest verify-uses-the-raw-token-secret
+  (let [consumer {:key "consumer-key"
+                  :secret "consumer-secret"
+                  :signature-method :hmac-sha1}
+        base-string (sig/base-string "GET" "https://example.com/resource" {:status "ok"})
+        token-secret "token&secret"
+        signature (sig/sign consumer base-string token-secret)]
+    (is (sig/verify signature consumer base-string token-secret))))

@@ -43,6 +43,17 @@
   (join "&" (map (fn [[k v]]
                    (str (url-encode (as-str k))
                         "=" (url-encode (as-str v)))) params )))
+
+(defn- base-string-uri [url]
+  (let [uri (java.net.URI. url)
+        scheme (clojure.string/lower-case (.getScheme uri))
+        host (clojure.string/lower-case (.getHost uri))
+        port (.getPort uri)
+        default-port (case scheme "http" 80 "https" 443 nil)
+        authority (str host (when (and (not= -1 port) (not= default-port port))
+                              (str ":" port)))]
+    (str scheme "://" authority (or (.getRawPath uri) "/"))))
+
 (defn base-string
   ([method base-url c t params]
      (base-string method base-url
@@ -54,7 +65,7 @@
                     :oauth_version "1.0")))
   ([method base-url params]
      (join "&" [method
-                (url-encode base-url)
+                (url-encode (base-string-uri base-url))
                 (url-encode (url-form-encode (sort params)))])))
 
 (defmulti sign
@@ -118,8 +129,7 @@
   (rsa-sign "SHA256withRSA" c base-string))
 
 (defn verify [sig c base-string & [token-secret]]
-  (let [token-secret (url-encode (or token-secret ""))]
-    (= sig (sign c base-string token-secret))))
+  (= sig (sign c base-string token-secret)))
 
 (defn url-encode
   "The java.net.URLEncoder class encodes application/x-www-form-urlencoded. OAuth

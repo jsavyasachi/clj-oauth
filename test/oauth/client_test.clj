@@ -91,3 +91,7 @@
                  :oauth_signature signature)]
     (is (= (oc/authorization-header (sort params))
            "OAuth oauth_consumer_key=\"GDdmIQH6jhtmLUypg82g\", oauth_nonce=\"9zWH6qe0qG7Lc1telCn7FhUbLyVdjEaL3MO5uHxn8\", oauth_session_handle=\"5a10ddsqoqo2rfi\", oauth_signature=\"f15S84zVZ96f9PwAJrBHq28KIF4%3D\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\"1272323047\", oauth_token=\"8ldIZyxQeVrFZXFOZH5tAwj6vzJYuLQpl0WUEYtWc\", oauth_version=\"1.0\""))))
+
+(deftest form-decode-preserves-equals-signs-in-values
+  (is (= {:oauth_token_secret "ab=="}
+         (oc/form-decode "oauth_token_secret=ab=="))))

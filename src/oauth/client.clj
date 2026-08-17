@@ -47,7 +47,7 @@ access to the User's account there. You can include extra parameters in a map."
   (if s
     (into {}
           (map (fn [kv]
-                 (let [[k v] (split kv #"=")
+                 (let [[k v] (split kv #"=" 2)
                        k (or k "")
                        v (or v "")]
                    [(keyword (sig/url-decode k)) (sig/url-decode v)]))
