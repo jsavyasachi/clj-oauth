@@ -22,13 +22,13 @@ HMAC-SHA256 support and moves onto current, security-supported dependencies
 Leiningen:
 
 ``` clojure
-[net.clojars.savya/clj-oauth "1.6.1"]
+[net.clojars.savya/clj-oauth "1.6.2"]
 ```
 
 deps.edn:
 
 ``` clojure
-net.clojars.savya/clj-oauth {:mvn/version "1.6.1"}
+net.clojars.savya/clj-oauth {:mvn/version "1.6.2"}
 ```
 
 # Building #
