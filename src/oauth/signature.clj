@@ -4,8 +4,8 @@
   oauth.signature
   (:import org.apache.commons.codec.binary.Base64
            org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter)
-  (:require [oauth.digest :as digest])
-  (:use [clojure.string :only [join]]))
+  (:require [oauth.digest :as digest]
+            [clojure.string :refer [join]]))
 
 (declare rand-str
          base-string
@@ -60,7 +60,7 @@
 (defmulti sign
   "Sign a base string for authentication."
   {:arglists '([consumer base-string & [token-secret]])}
-  (fn [c & r] (:signature-method c)))
+  (fn [c & _] (:signature-method c)))
 
 (defmethod sign :hmac-sha1
   [c base-string & [token-secret]]
@@ -73,7 +73,7 @@
     (digest/hmac-sign key base-string "HmacSHA256")))
 
 (defmethod sign :plaintext
-  [c base-string & [token-secret]]
+  [c _base-string & [token-secret]]
   (str (url-encode (:secret c)) "&" (url-encode (or token-secret ""))))
 
 (def ^:private pem-converter
@@ -110,11 +110,11 @@
     (String. (Base64/encodeBase64 (.sign signer)))))
 
 (defmethod sign :rsa-sha1
-  [c ^String base-string & [token-secret]]
+  [c ^String base-string & [_token-secret]]
   (rsa-sign "SHA1withRSA" c base-string))
 
 (defmethod sign :rsa-sha256
-  [c ^String base-string & [token-secret]]
+  [c ^String base-string & [_token-secret]]
   (rsa-sign "SHA256withRSA" c base-string))
 
 (defn verify [sig c base-string & [token-secret]]

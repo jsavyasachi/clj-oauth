@@ -2,10 +2,9 @@
     #^{:author "Matt Revelle"
        :doc "OAuth client library for Clojure."}
   oauth.client
-  (:require [oauth.digest :as digest]
-            [oauth.signature :as sig]
-            [clj-http.client :as httpclient])
-  (:use [clojure.string :only [join split upper-case]]))
+  (:require [oauth.signature :as sig]
+            [clj-http.client :as httpclient]
+            [clojure.string :refer [join split upper-case]]))
 
 (defrecord #^{:doc "OAuth consumer"}
     Consumer [key secret request-uri
@@ -52,7 +51,8 @@ access to the User's account there. You can include extra parameters in a map."
                        k (or k "")
                        v (or v "")]
                    [(keyword (sig/url-decode k)) (sig/url-decode v)]))
-               (split s #"&")))))
+               (split s #"&")))
+    nil))
 
 (defn- check-success-response [m]
   (let [code (:status m)]
