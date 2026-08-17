@@ -1,3 +1,15 @@
+## [1.6.3] - 2026-08-17
+
+### Fixed
+
+- The signature base string now applies RFC 5849 URI normalization (lowercase
+  scheme and host, drop the default port, exclude the query and fragment), so
+  requests with a query string, a default port, or a mixed-case host sign
+  correctly.
+- `verify` no longer double-encodes the token secret.
+- `form-decode` splits each pair on the first `=` only, so padded base64 token
+  secrets are no longer truncated.
+
 ## [1.6.2] - 2026-07-12
 
 ### Changed
