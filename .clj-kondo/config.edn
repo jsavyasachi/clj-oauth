@@ -1,0 +1,23 @@
+{:config-in-ns
+ {oauth.client-test
+  {:linters
+   {:use {:level :off}
+    :unused-namespace {:level :off}
+    :unused-referred-var {:level :off}}}
+
+  oauth.client-twitter-test
+  {:linters {:use {:level :off}}}
+
+  oauth.client-xauth-test
+  {:linters {:use {:level :off}}}
+
+  oauth.rsa-test
+  {:linters {:use {:level :off}}}
+
+  oauth.signature-test
+  {:linters
+   {:use {:level :off}
+    :unused-namespace {:level :off}}}}}
+
+;; These legacy test namespaces use :use, and client-test keeps an unused
+;; pprint helper. Test code is intentionally unchanged for this CI-only gate.
