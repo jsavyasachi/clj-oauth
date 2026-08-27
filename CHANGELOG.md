@@ -1,3 +1,12 @@
+## [Unreleased]
+
+## [1.8.0] - 2026-08-27
+
+### Added
+
+- Accept ordered key-value parameter sequences for query, form, and OAuth
+  parameters, retaining duplicate keys during RFC 5849 signature normalization.
+
 ## [1.7.0] - 2026-08-27
 
 ### Added

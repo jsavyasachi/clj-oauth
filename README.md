@@ -24,13 +24,13 @@ clj-http 3.13, and Clojure 1.12.
 deps.edn:
 
 ```clojure
-net.clojars.savya/clj-oauth {:mvn/version "1.7.0"}
+net.clojars.savya/clj-oauth {:mvn/version "1.8.0"}
 ```
 
 Leiningen:
 
 ```clojure
-[net.clojars.savya/clj-oauth "1.7.0"]
+[net.clojars.savya/clj-oauth "1.8.0"]
 ```
 
 ## Building
@@ -69,6 +69,11 @@ Live Twitter tests have the `^:integration` tag and do not run by default.
                        "https://api.twitter.com/oauth/authorize"
                        :hmac-sha1))
 
+;; The signature method may be :hmac-sha1 (the default), :hmac-sha256,
+;; :rsa-sha1, :rsa-sha256, or :plaintext. RSA private keys may be given in
+;; either PKCS#1 or PKCS#8 PEM format.
+
+;; A callback URI is not required for desktop applications.
 (def request-token (oauth/request-token consumer <callback-uri>))
 
 (oauth/user-approval-uri consumer (:oauth_token request-token))
@@ -97,6 +102,11 @@ through clj-http. Put additional OAuth fields in `:oauth-params`; all other
 options are passed through to clj-http. Query and form parameters are included
 in the signature.
 
+Parameter maps remain supported. Query, form, and additional OAuth parameters
+may also be supplied as ordered key-value pairs, for example
+`[["tag" "clojure"] ["tag" "oauth"]]`; repeated keys are retained for
+RFC 5849 signature normalization.
+
 ```clojure
 (require '[oauth.client :as oauth])
 
@@ -114,7 +124,8 @@ Convenience functions named `get-request`, `post-request`, `put-request`, and
 
 ## Authors
 
-Development funded by LikeStream LLC (Don Jackson and Shirish Andhare).
+Development funded by LikeStream LLC (Don Jackson and Shirish Andhare), see
+[likestream.org/opensource.html](http://www.likestream.org/opensource.html).
 
 Designed and developed by Matt Revelle. Contributions from Richard Newman.
 

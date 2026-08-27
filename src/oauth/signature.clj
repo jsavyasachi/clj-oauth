@@ -44,6 +44,21 @@
                    (str (url-encode (as-str k))
                         "=" (url-encode (as-str v)))) params )))
 
+(defn param-pairs
+  "Return parameters as a sequence of key-value pairs.
+
+  Maps remain supported; sequential inputs are kept in their supplied order
+  and may contain duplicate keys."
+  [params]
+  (if (map? params)
+    (seq params)
+    (or params [])))
+
+(defn- encoded-param-pairs [params]
+  (sort-by (fn [[k v]] [(url-encode (as-str k))
+                        (url-encode (as-str v))])
+           (param-pairs params)))
+
 (defn- base-string-uri [url]
   (let [uri (java.net.URI. url)
         scheme (clojure.string/lower-case (.getScheme uri))
@@ -56,17 +71,24 @@
 
 (defn base-string
   ([method base-url c t params]
-     (base-string method base-url
-                  (assoc params
-                    :oauth_consumer_key (:key c)
-                    :oauth_token (:token t)
-                    :oauth_signature_method (or (params :oauth_signature_method)
-                                                (signature-methods (:signature-method c)))
-                    :oauth_version "1.0")))
+     (let [oauth-params {:oauth_consumer_key (:key c)
+                         :oauth_token (:token t)
+                         :oauth_signature_method
+                         (or (if (map? params)
+                               (params :oauth_signature_method)
+                               (some (fn [[k v]]
+                                       (when (= k :oauth_signature_method) v))
+                                     params))
+                             (signature-methods (:signature-method c)))
+                         :oauth_version "1.0"}]
+       (base-string method base-url
+                    (if (map? params)
+                      (merge params oauth-params)
+                      (concat (param-pairs params) oauth-params)))))
   ([method base-url params]
      (join "&" [method
                 (url-encode (base-string-uri base-url))
-                (url-encode (url-form-encode (sort params)))])))
+                (url-encode (url-form-encode (encoded-param-pairs params)))])))
 
 (defmulti sign
   "Sign a base string for authentication."
