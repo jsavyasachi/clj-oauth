@@ -364,6 +364,25 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPwrtgkaYAbp/xzfBzcsZR/ADW1ZVsRG
                           "HTTPS://EXAMPLE.COM:443/resource?ignored=true#fragment"
                           {:status "ok"}))))
 
+(deftest url-form-encode-accepts-ordered-pairs
+  (is (= "dup=z&dup=a"
+         (sig/url-form-encode [["dup" "z"] ["dup" "a"]]))))
+
+(deftest base-string-sorts-encoded-pairs-and-retains-duplicates
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&a%2520b%3Dd%26a~b%3Dc%26dup%3Da%26dup%3Dz"
+         (sig/base-string "GET"
+                          "https://example.com/resource"
+                          [["dup" "z"]
+                           ["a~b" "c"]
+                           ["dup" "a"]
+                           ["a b" "d"]]))))
+
+(deftest base-string-orders-prefix-sharing-keys
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&a%3Dfirst%26aa%3Dsecond"
+         (sig/base-string "GET"
+                          "https://example.com/resource"
+                          [["aa" "second"] ["a" "first"]]))))
+
 (deftest verify-uses-the-raw-token-secret
   (let [consumer {:key "consumer-key"
                   :secret "consumer-secret"

@@ -71,3 +71,23 @@
 
 (deftest signed-delete-request
   (exercise-request "DELETE" #'http/delete))
+
+(deftest signed-request-accepts-ordered-pairs
+  (let [seen (atom nil)
+        options {:oauth-params [["oauth_callback" "https://client.test/callback"]
+                                ["oauth_callback" "https://client.test/second"]]
+                 :query-params [["tag" "one"] ["tag" "two"]]
+                 :form-params [["a" "one"] ["aa" "two"]]}
+        response {:status 200 :body "ok"}]
+    (with-redefs-fn {#'http/get (fn [url request-options]
+                                  (reset! seen [url request-options])
+                                  response)
+                     #'sig/rand-str (constantly "nonce")
+                     #'sig/msecs->secs (constantly 123)}
+      #(do
+         (is (= response (oc/signed-request consumer token token-secret :GET request-url options)))
+         (let [[_ request-options] @seen
+               header (get-in request-options [:headers "Authorization"])]
+           (is (= 2 (count (re-seq #"oauth_callback=" header))))
+           (is (= (:query-params options) (:query-params request-options)))
+           (is (= (:form-params options) (:form-params request-options))))))))

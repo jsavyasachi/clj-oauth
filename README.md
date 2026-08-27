@@ -97,6 +97,11 @@ through clj-http. Put additional OAuth fields in `:oauth-params`; all other
 options are passed through to clj-http. Query and form parameters are included
 in the signature.
 
+Parameter maps remain supported. Query, form, and additional OAuth parameters
+may also be supplied as ordered key-value pairs, for example
+`[["tag" "clojure"] ["tag" "oauth"]]`; repeated keys are retained for
+RFC 5849 signature normalization.
+
 ```clojure
 (require '[oauth.client :as oauth])
 

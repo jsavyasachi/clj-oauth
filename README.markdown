@@ -44,6 +44,10 @@ default. To run them, set `TWITTER_CONSUMER_KEY` and `TWITTER_CONSUMER_SECRET`
 in the environment and run `lein test :integration` (or `lein test :all` for
 everything).
 
+Query, form, and OAuth parameters may be maps or ordered key-value pair
+sequences. Pair sequences retain repeated keys, for example
+`[["tag" "clojure"] ["tag" "oauth"]]`, for RFC 5849 signature normalization.
+
 # Client Example #
 ``` clojure
     (require ['oauth.client :as 'oauth])

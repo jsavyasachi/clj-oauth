@@ -27,7 +27,9 @@ access to the User's account there. You can include extra parameters in a map."
    (user-approval-uri consumer token {}))
   ([consumer token extra-params]
    (str (:authorize-uri consumer)
-        "?" (httpclient/generate-query-string (merge {:oauth_token token} extra-params)))))
+        "?" (sig/url-form-encode
+              (concat [[:oauth_token token]]
+                      (sig/param-pairs extra-params))))))
 
 (defn authorization-header
   "Format OAuth credentials for the Authorization HTTP header."
@@ -37,9 +39,12 @@ access to the User's account there. You can include extra parameters in a map."
                 (map (fn [[k v]]
                        (str (-> k sig/as-str sig/url-encode)
                             "=\"" (-> v sig/as-str sig/url-encode) "\""))
-                     oauth-params))))
+                     (sig/param-pairs oauth-params)))))
   ([oauth-params realm]
-     (authorization-header (assoc oauth-params :realm realm))))
+     (authorization-header
+      (if (map? oauth-params)
+        (assoc oauth-params :realm realm)
+        (concat (sig/param-pairs oauth-params) [[:realm realm]])))))
 
 (defn form-decode
   "Parse form-encoded bodies in OAuth responses."
@@ -85,8 +90,8 @@ parameters in the request."
                                                    (sig/rand-str 30)
                                                    (sig/msecs->secs (System/currentTimeMillis))
                                                    token)
-           unsigned-params (merge request-params
-                                  unsigned-oauth-params)
+           unsigned-params (concat (sig/param-pairs request-params)
+                                   (sig/param-pairs unsigned-oauth-params))
            signature (sig/sign consumer
                                (sig/base-string (-> request-method
                                                     sig/as-str
@@ -94,7 +99,10 @@ parameters in the request."
                                                 request-uri
                                                  unsigned-params)
                                token-secret)]
-       (assoc unsigned-oauth-params :oauth_signature signature))))
+       (if (map? unsigned-oauth-params)
+         (assoc unsigned-oauth-params :oauth_signature signature)
+         (concat (sig/param-pairs unsigned-oauth-params)
+                 [[:oauth_signature signature]])))))
 
 (defn- execute-request [request-method url request-options]
   (case request-method
@@ -115,11 +123,12 @@ parameters in the request."
    (signed-request consumer token token-secret request-method url {}))
   ([consumer token token-secret request-method url request-options]
    (let [method (-> request-method sig/as-str upper-case)
-         signing-params (merge (:oauth-params request-options)
-                               (:query-params request-options)
-                               (:form-params request-options))
-         oauth-params (merge (:oauth-params request-options)
-                             (credentials consumer token token-secret method url signing-params))
+         signing-params (concat (sig/param-pairs (:oauth-params request-options))
+                                (sig/param-pairs (:query-params request-options))
+                                (sig/param-pairs (:form-params request-options)))
+         oauth-params (concat (sig/param-pairs (:oauth-params request-options))
+                              (sig/param-pairs
+                               (credentials consumer token token-secret method url signing-params)))
          request-options (-> request-options
                              (dissoc :oauth-params)
                              (update :headers merge
@@ -158,9 +167,14 @@ parameters in the request."
   "Build an OAuth request."
   ([consumer uri unsigned-oauth-params & [extra-params token-secret]]
      (let [signature (sig/sign consumer
-                               (sig/base-string "POST" uri (merge unsigned-oauth-params extra-params))
+                               (sig/base-string "POST" uri
+                                                (concat (sig/param-pairs unsigned-oauth-params)
+                                                        (sig/param-pairs extra-params)))
                                token-secret)
-           oauth-params (assoc unsigned-oauth-params :oauth_signature signature)]
+           oauth-params (if (map? unsigned-oauth-params)
+                          (assoc unsigned-oauth-params :oauth_signature signature)
+                          (concat (sig/param-pairs unsigned-oauth-params)
+                                  [[:oauth_signature signature]]))]
        (build-request oauth-params extra-params))))
 
 (defn request-token
