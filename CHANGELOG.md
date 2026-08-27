@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.8.0] - 2026-08-27
+
 ### Added
 
 - Accept ordered key-value parameter sequences for query, form, and OAuth
