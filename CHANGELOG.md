@@ -1,3 +1,10 @@
+## [1.7.0] - Unreleased
+
+### Added
+
+- Add signed GET, POST, PUT, and DELETE request helpers that generate OAuth
+  parameters, Authorization headers, and execute through clj-http.
+
 ## [1.6.3] - 2026-08-17
 
 ### Fixed
