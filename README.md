@@ -89,6 +89,29 @@ Live Twitter tests have the `^:integration` tag and do not run by default.
            {:query-params (merge credentials user-params)})
 ```
 
+## Signed requests
+
+For protected resources, `signed-request` generates the OAuth nonce and
+timestamp, signs the request, adds the Authorization header, and executes it
+through clj-http. Put additional OAuth fields in `:oauth-params`; all other
+options are passed through to clj-http. Query and form parameters are included
+in the signature.
+
+```clojure
+(require '[oauth.client :as oauth])
+
+(oauth/signed-request consumer
+                      (:oauth_token access-token-response)
+                      (:oauth_token_secret access-token-response)
+                      :POST
+                      "https://api.twitter.com/1.1/statuses/update.json"
+                      {:form-params {:status "posting from #clojure"}
+                       :headers {"X-Client" "example"}})
+```
+
+Convenience functions named `get-request`, `post-request`, `put-request`, and
+`delete-request` accept the same arguments without the method parameter.
+
 ## Authors
 
 Development funded by LikeStream LLC (Don Jackson and Shirish Andhare).

@@ -96,6 +96,64 @@ parameters in the request."
                                token-secret)]
        (assoc unsigned-oauth-params :oauth_signature signature))))
 
+(defn- execute-request [request-method url request-options]
+  (case request-method
+    "GET" (httpclient/get url request-options)
+    "POST" (httpclient/post url request-options)
+    "PUT" (httpclient/put url request-options)
+    "DELETE" (httpclient/delete url request-options)
+    (throw (IllegalArgumentException.
+            (str "Unsupported request method: " request-method)))))
+
+(defn signed-request
+  "Execute a signed OAuth request.
+
+  `request-options` accepts `:oauth-params` for additional OAuth parameters.
+  All other options are passed to clj-http unchanged, including query and form
+  parameters, which are included in the signature."
+  ([consumer token token-secret request-method url]
+   (signed-request consumer token token-secret request-method url {}))
+  ([consumer token token-secret request-method url request-options]
+   (let [method (-> request-method sig/as-str upper-case)
+         signing-params (merge (:oauth-params request-options)
+                               (:query-params request-options)
+                               (:form-params request-options))
+         oauth-params (merge (:oauth-params request-options)
+                             (credentials consumer token token-secret method url signing-params))
+         request-options (-> request-options
+                             (dissoc :oauth-params)
+                             (update :headers merge
+                                     {"Authorization" (authorization-header oauth-params)}))]
+     (execute-request method url request-options))))
+
+(defn get-request
+  "Execute a signed GET request."
+  ([consumer token token-secret url]
+   (signed-request consumer token token-secret :GET url))
+  ([consumer token token-secret url request-options]
+   (signed-request consumer token token-secret :GET url request-options)))
+
+(defn post-request
+  "Execute a signed POST request."
+  ([consumer token token-secret url]
+   (signed-request consumer token token-secret :POST url))
+  ([consumer token token-secret url request-options]
+   (signed-request consumer token token-secret :POST url request-options)))
+
+(defn put-request
+  "Execute a signed PUT request."
+  ([consumer token token-secret url]
+   (signed-request consumer token token-secret :PUT url))
+  ([consumer token token-secret url request-options]
+   (signed-request consumer token token-secret :PUT url request-options)))
+
+(defn delete-request
+  "Execute a signed DELETE request."
+  ([consumer token token-secret url]
+   (signed-request consumer token token-secret :DELETE url))
+  ([consumer token token-secret url request-options]
+   (signed-request consumer token token-secret :DELETE url request-options)))
+
 (defn build-oauth-token-request
   "Build an OAuth request."
   ([consumer uri unsigned-oauth-params & [extra-params token-secret]]
