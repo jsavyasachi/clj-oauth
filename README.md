@@ -69,6 +69,11 @@ Live Twitter tests have the `^:integration` tag and do not run by default.
                        "https://api.twitter.com/oauth/authorize"
                        :hmac-sha1))
 
+;; The signature method may be :hmac-sha1 (the default), :hmac-sha256,
+;; :rsa-sha1, :rsa-sha256, or :plaintext. RSA private keys may be given in
+;; either PKCS#1 or PKCS#8 PEM format.
+
+;; A callback URI is not required for desktop applications.
 (def request-token (oauth/request-token consumer <callback-uri>))
 
 (oauth/user-approval-uri consumer (:oauth_token request-token))
@@ -119,7 +124,8 @@ Convenience functions named `get-request`, `post-request`, `put-request`, and
 
 ## Authors
 
-Development funded by LikeStream LLC (Don Jackson and Shirish Andhare).
+Development funded by LikeStream LLC (Don Jackson and Shirish Andhare), see
+[likestream.org/opensource.html](http://www.likestream.org/opensource.html).
 
 Designed and developed by Matt Revelle. Contributions from Richard Newman.
 
