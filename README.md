@@ -24,13 +24,13 @@ clj-http 3.13, and Clojure 1.12.
 deps.edn:
 
 ```clojure
-net.clojars.savya/clj-oauth {:mvn/version "1.6.3"}
+net.clojars.savya/clj-oauth {:mvn/version "1.7.0"}
 ```
 
 Leiningen:
 
 ```clojure
-[net.clojars.savya/clj-oauth "1.6.3"]
+[net.clojars.savya/clj-oauth "1.7.0"]
 ```
 
 ## Building

@@ -1,9 +1,10 @@
-## [1.7.0] - Unreleased
+## [1.7.0] - 2026-08-27
 
 ### Added
 
-- Add signed GET, POST, PUT, and DELETE request helpers that generate OAuth
-  parameters, Authorization headers, and execute through clj-http.
+- Add `signed-request`, plus signed GET, POST, PUT, and DELETE convenience
+  wrappers that generate OAuth parameters, Authorization headers, and execute
+  through clj-http.
 
 ## [1.6.3] - 2026-08-17
 
