@@ -94,6 +94,40 @@ Live Twitter tests have the `^:integration` tag and do not run by default.
            {:query-params (merge credentials user-params)})
 ```
 
+## Other provider flows
+
+OAuth 1.0a providers return a refreshable token when they support refresh
+tokens. Pass the access token response to `refresh-token`:
+
+```clojure
+(def refreshed (oauth/refresh-token consumer access-token-response))
+```
+
+For providers such as Twitter that support xAuth, use a dedicated credentials
+flow. Keep usernames and passwords in a secret store; the values below are
+placeholders only:
+
+```clojure
+(def xauth-token (oauth/xauth-access-token consumer <username> <password>))
+```
+
+RSA consumers take the private-key PEM string as the consumer secret. Load it
+from a protected file or secret manager, rather than committing it:
+
+```clojure
+(require '[clojure.java.io :as io])
+(def rsa-consumer
+  (oauth/make-consumer <consumer-key>
+                       (slurp (io/file <private-key-path>))
+                       <request-uri> <access-uri> <authorize-uri>
+                       :rsa-sha256))
+```
+
+Use `:rsa-sha1` only when required by a legacy provider. Callback handling is
+the same for every signature method: pass the callback URI to
+`request-token`, send the user to `user-approval-uri`, then pass the returned
+verifier to `access-token`.
+
 ## Signed requests
 
 For protected resources, `signed-request` generates the OAuth nonce and
@@ -121,6 +155,13 @@ RFC 5849 signature normalization.
 
 Convenience functions named `get-request`, `post-request`, `put-request`, and
 `delete-request` accept the same arguments without the method parameter.
+
+For deterministic tests or coordinated retries, signed and token requests
+accept `:oauth-nonce-fn`, `:oauth-timestamp-fn`, and `:oauth-clock-fn` options.
+The clock returns milliseconds and is converted to the OAuth seconds value.
+Token endpoints also accept an opt-in `:token-request` map with `:method`,
+`:body-encoding` (`:form`, `:query`, or `:raw`), `:content-type`, `:headers`,
+and `:response-parser`; omitted options retain POST/form decoding defaults.
 
 ## Authors
 

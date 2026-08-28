@@ -5,8 +5,8 @@
 (defn hmac-sign
   "Calculate an HMAC signature for the data."
   [^String key ^String data ^String hmac-algo]
-  (let [signing-key (SecretKeySpec. (.getBytes key) hmac-algo)
+  (let [signing-key (SecretKeySpec. (.getBytes key "UTF-8") hmac-algo)
         mac (doto (Mac/getInstance hmac-algo) (.init signing-key))]
     (String. (org.apache.commons.codec.binary.Base64/encodeBase64
-               (.doFinal mac (.getBytes data)))
+               (.doFinal mac (.getBytes data "UTF-8")))
              "UTF-8")))

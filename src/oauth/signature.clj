@@ -21,7 +21,7 @@
     (name a)
     (str a)))
 
-(def secure-random (java.security.SecureRandom/getInstance "SHA1PRNG"))
+(def secure-random (java.security.SecureRandom.))
 
 (defn rand-str
   "Make a random string for OAuth requests."
@@ -139,8 +139,8 @@
     (org.bouncycastle.jce.provider.BouncyCastleProvider.))
   (let [signer (doto (java.security.Signature/getInstance jca-algorithm "BC")
                  (.initSign (rsa-private-key (:secret c)) (java.security.SecureRandom.))
-                 (.update (.getBytes base-string)))]
-    (String. (Base64/encodeBase64 (.sign signer)))))
+                 (.update (.getBytes base-string "UTF-8")))]
+    (String. (Base64/encodeBase64 (.sign signer)) "UTF-8")))
 
 (defmethod sign :rsa-sha1
   [c ^String base-string & [_token-secret]]
@@ -151,7 +151,9 @@
   (rsa-sign "SHA256withRSA" c base-string))
 
 (defn verify [sig c base-string & [token-secret]]
-  (= sig (sign c base-string token-secret)))
+  (java.security.MessageDigest/isEqual
+   (.getBytes (str sig) "UTF-8")
+   (.getBytes (str (sign c base-string token-secret)) "UTF-8")))
 
 (defn url-encode
   "The java.net.URLEncoder class encodes application/x-www-form-urlencoded. OAuth

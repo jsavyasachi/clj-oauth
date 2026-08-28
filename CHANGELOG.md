@@ -1,5 +1,21 @@
 ## [Unreleased]
 
+### Added
+
+- Add injectable OAuth nonce, timestamp, and clock functions for deterministic
+  requests.
+- Add local fake-provider protocol coverage for token, refresh, xAuth, and
+  protected-resource flows.
+- Add configurable token endpoint methods, body encodings, headers, content
+  types, and response parsers.
+
+### Changed
+
+- Token request failures now throw structured `ex-info` errors containing
+  status, headers, body, and decoded OAuth error parameters.
+- Use explicit UTF-8 encoding for cryptographic inputs, platform-independent
+  secure randomness, and constant-time signature comparison.
+
 ## [1.8.0] - 2026-08-27
 
 ### Added

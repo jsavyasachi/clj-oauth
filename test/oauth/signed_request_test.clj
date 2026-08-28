@@ -91,3 +91,30 @@
            (is (= 2 (count (re-seq #"oauth_callback=" header))))
            (is (= (:query-params options) (:query-params request-options)))
            (is (= (:form-params options) (:form-params request-options))))))))
+
+(deftest signed-request-accepts-public-oauth-time-injection
+  (let [seen (atom nil)
+        options {:oauth-nonce-fn (constantly "injected-nonce")
+                 :oauth-clock-fn (constantly 1700000000123)}]
+    (with-redefs-fn {#'http/get (fn [url request-options]
+                                  (reset! seen [url request-options])
+                                  {:status 200 :body "ok"})}
+      #(do
+         (oc/signed-request consumer token token-secret :GET request-url options)
+         (let [header (get-in (second @seen) [:headers "Authorization"])
+               params (header-params header)]
+           (is (= "injected-nonce" (:oauth_nonce params)))
+           (is (= "1700000000" (:oauth_timestamp params))))))))
+
+(deftest signed-request-accepts-public-timestamp-function
+  (let [seen (atom nil)
+        options {:oauth-nonce-fn (constantly "nonce")
+                 :oauth-timestamp-fn (constantly 4242)}]
+    (with-redefs-fn {#'http/get (fn [_ request-options]
+                                  (reset! seen request-options)
+                                  {:status 200 :body "ok"})}
+      #(do
+         (oc/signed-request consumer token token-secret :GET request-url options)
+         (is (= "4242"
+                (:oauth_timestamp
+                 (header-params (get-in @seen [:headers "Authorization"])))))))))

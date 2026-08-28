@@ -1,6 +1,7 @@
 (ns oauth.client-test
   (:require [oauth.client :as oc]
             [oauth.signature :as sig]
+            [clj-http.client :as http]
             :reload-all)
   (:use clojure.test
         [clojure.pprint :only [pprint]]))
@@ -95,3 +96,49 @@
 (deftest form-decode-preserves-equals-signs-in-values
   (is (= {:oauth_token_secret "ab=="}
          (oc/form-decode "oauth_token_secret=ab=="))))
+
+(deftest token-failure-carries-structured-oauth-error-data
+  (with-redefs-fn {#'http/post (fn [_ _]
+                                 {:status 401
+                                  :headers {"content-type" "application/x-www-form-urlencoded"}
+                                  :body "oauth_problem=signature_invalid&oauth_problem_advice=check+clock"})}
+    #(let [error (try
+                   (oc/request-token (oc/make-consumer "key" "secret"
+                                                        "https://example.test/request"
+                                                        "https://example.test/access"
+                                                        "https://example.test/authorize"
+                                                        :hmac-sha1))
+                   nil
+                   (catch clojure.lang.ExceptionInfo e e))]
+       (is (some? error))
+       (is (= {:status 401
+               :headers {"content-type" "application/x-www-form-urlencoded"}
+               :body "oauth_problem=signature_invalid&oauth_problem_advice=check+clock"
+               :oauth-params {:oauth_problem "signature_invalid"
+                              :oauth_problem_advice "check clock"}}
+              (ex-data error))))))
+
+(deftest token-request-supports-scoped-wire-configuration
+  (let [seen (atom nil)
+        consumer (oc/make-consumer "key" "secret"
+                                   "https://example.test/request"
+                                   "https://example.test/access"
+                                   "https://example.test/authorize"
+                                   :hmac-sha1)]
+    (with-redefs-fn {#'http/get (fn [url options]
+                                 (reset! seen [url options])
+                                 {:status 200 :body "oauth_token=token"})}
+      #(is (= {:token "token"}
+              (oc/request-token consumer "oob" {:scope "read"}
+                                {:token-request {:method :get
+                                                 :body-encoding :query
+                                                 :content-type "application/custom"
+                                                 :headers {"X-Provider" "test"}
+                                                 :response-parser (fn [body]
+                                                                    (hash-map :token
+                                                                              (:oauth_token (oc/form-decode body))))}}))))
+    (let [[url options] @seen]
+      (is (= "https://example.test/request" url))
+      (is (= {:scope "read"} (:query-params options)))
+      (is (= "application/custom" (get-in options [:headers "Content-Type"])))
+      (is (= "test" (get-in options [:headers "X-Provider"]))))))

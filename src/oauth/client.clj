@@ -63,9 +63,33 @@ access to the User's account there. You can include extra parameters in a map."
   (let [code (:status m)]
     (if (or (< code 200)
             (>= code 300))
-      (throw (new Exception (str "Got non-success code: " code ". "
-                                 "Content: " (:body m))))
+      (throw (ex-info (str "Got non-success code: " code ". "
+                          "Content: " (:body m))
+                      {:status code
+                       :headers (:headers m)
+                       :body (:body m)
+                       :oauth-params (form-decode (:body m))}))
       m)))
+
+(defn- oauth-request-values
+  "Return an injectable nonce and timestamp for an OAuth request."
+  [options]
+  (let [nonce-fn (or (:oauth-nonce-fn options) sig/rand-str)
+        timestamp-fn (:oauth-timestamp-fn options)
+        clock-fn (or (:oauth-clock-fn options) #(System/currentTimeMillis))]
+    [(nonce-fn 30)
+     (if timestamp-fn
+       (timestamp-fn)
+       (sig/msecs->secs (clock-fn)))]))
+
+(defn- oauth-params-for
+  [consumer options & [token verifier]]
+  (let [[nonce timestamp] (oauth-request-values options)]
+    (if verifier
+      (sig/oauth-params consumer nonce timestamp token verifier)
+      (if token
+        (sig/oauth-params consumer nonce timestamp token)
+        (sig/oauth-params consumer nonce timestamp)))))
 
 (defn build-request
   "Build a request from prepared parameters."
@@ -85,11 +109,9 @@ access to the User's account there. You can include extra parameters in a map."
   "Return authorization credentials for protected resources. The returned map
 contains key-value pairs. Add them to the Authorization HTTP header or as query
 parameters in the request."
-  ([consumer token token-secret request-method request-uri & [request-params]]
-     (let [unsigned-oauth-params (sig/oauth-params consumer
-                                                   (sig/rand-str 30)
-                                                   (sig/msecs->secs (System/currentTimeMillis))
-                                                   token)
+  ([consumer token token-secret request-method request-uri & [request-params oauth-options]]
+     (let [[nonce timestamp] (oauth-request-values oauth-options)
+           unsigned-oauth-params (sig/oauth-params consumer nonce timestamp token)
            unsigned-params (concat (sig/param-pairs request-params)
                                    (sig/param-pairs unsigned-oauth-params))
            signature (sig/sign consumer
@@ -113,6 +135,35 @@ parameters in the request."
     (throw (IllegalArgumentException.
             (str "Unsupported request method: " request-method)))))
 
+(defn- token-request-config [options]
+  (merge {:method "POST"
+          :body-encoding :form
+          :response-parser form-decode}
+         (:token-request options)))
+
+(defn- configure-token-request [request body-params config]
+  (let [body-params (or body-params {})
+        request (case (:body-encoding config)
+                  :form (assoc request :form-params body-params)
+                  :query (assoc (dissoc request :form-params)
+                                :query-params body-params)
+                  :raw (assoc (dissoc request :form-params)
+                              :body (sig/url-form-encode (sig/param-pairs body-params)))
+                  (throw (IllegalArgumentException.
+                          (str "Unsupported token body encoding: "
+                               (:body-encoding config)))))]
+    (cond-> (update request :headers merge (:headers config))
+      (:content-type config) (assoc-in [:headers "Content-Type"] (:content-type config)))))
+
+(defn- execute-token-request [url request body-params options]
+  (let [config (token-request-config options)
+        request (configure-token-request request body-params config)
+        response (check-success-response
+                  (execute-request (-> (:method config) sig/as-str upper-case)
+                                   url
+                                   request))]
+    ((:response-parser config) (:body response))))
+
 (defn signed-request
   "Execute a signed OAuth request.
 
@@ -128,9 +179,9 @@ parameters in the request."
                                 (sig/param-pairs (:form-params request-options)))
          oauth-params (concat (sig/param-pairs (:oauth-params request-options))
                               (sig/param-pairs
-                               (credentials consumer token token-secret method url signing-params)))
+                               (credentials consumer token token-secret method url signing-params request-options)))
          request-options (-> request-options
-                             (dissoc :oauth-params)
+                             (dissoc :oauth-params :oauth-nonce-fn :oauth-timestamp-fn :oauth-clock-fn)
                              (update :headers merge
                                      {"Authorization" (authorization-header oauth-params)}))]
      (execute-request method url request-options))))
@@ -165,9 +216,11 @@ parameters in the request."
 
 (defn build-oauth-token-request
   "Build an OAuth request."
-  ([consumer uri unsigned-oauth-params & [extra-params token-secret]]
+  ([consumer uri unsigned-oauth-params & [extra-params token-secret request-config]]
      (let [signature (sig/sign consumer
-                               (sig/base-string "POST" uri
+                               (sig/base-string (-> (:method request-config "POST")
+                                                    sig/as-str upper-case)
+                                                uri
                                                 (concat (sig/param-pairs unsigned-oauth-params)
                                                         (sig/param-pairs extra-params)))
                                token-secret)
@@ -184,15 +237,19 @@ parameters in the request."
   ([consumer callback-uri]
      (request-token consumer callback-uri nil))
   ([consumer callback-uri extra-params]
-     (let [unsigned-params (-> (sig/oauth-params consumer
-                                                 (sig/rand-str 30)
-                                                 (sig/msecs->secs (System/currentTimeMillis)))
+     (request-token consumer callback-uri extra-params {}))
+  ([consumer callback-uri extra-params options]
+     (let [unsigned-params (-> (oauth-params-for consumer options)
                                (assoc :oauth_callback callback-uri))]
-       (post-request-body-decoded (:request-uri consumer)
-                                  (build-oauth-token-request consumer
-                                                             (:request-uri consumer)
-                                                             unsigned-params
-                                                             extra-params)))))
+       (execute-token-request (:request-uri consumer)
+                              (build-oauth-token-request consumer
+                                                         (:request-uri consumer)
+                                                         unsigned-params
+                                                         extra-params
+                                                         nil
+                                                         (:token-request options))
+                              extra-params
+                              options))))
 
 (defn access-token
   "Exchange a request token for an access token.
@@ -201,73 +258,83 @@ parameters in the request."
   ([consumer request-token]
      (access-token consumer request-token nil))
   ([consumer request-token verifier]
-     (let [unsigned-oauth-params (if verifier
-                                   (sig/oauth-params consumer
-                                                     (sig/rand-str 30)
-                                                     (sig/msecs->secs (System/currentTimeMillis))
-                                                     (:oauth_token request-token)
-                                                     verifier)
-                                   (sig/oauth-params consumer
-                                                     (sig/rand-str 30)
-                                                     (sig/msecs->secs (System/currentTimeMillis))
-                                                     (:oauth_token
-                                                      request-token)))
+     (access-token consumer request-token verifier {}))
+  ([consumer request-token verifier options]
+     (let [unsigned-oauth-params (oauth-params-for consumer options
+                                                   (:oauth_token request-token)
+                                                   verifier)
            token-secret (:oauth_token_secret request-token)]
-       (post-request-body-decoded (:access-uri consumer)
-                                  (build-oauth-token-request consumer
-                                                             (:access-uri consumer)
-                                                             unsigned-oauth-params
-                                                             nil
-                                                             token-secret)))))
+       (execute-token-request (:access-uri consumer)
+                              (build-oauth-token-request consumer
+                                                         (:access-uri consumer)
+                                                         unsigned-oauth-params
+                                                         nil
+                                                         token-secret
+                                                         (:token-request options))
+                              nil
+                              options))))
+(defn- build-xauth-access-token-request* [consumer token username password nonce timestamp request-config]
+  (let [secret (:oauth_token_secret token)
+        token (:oauth_token token)
+        oauth-params (if token
+                       (sig/oauth-params consumer nonce timestamp token)
+                       (sig/oauth-params consumer nonce timestamp))
+        post-params {:x_auth_username username
+                     :x_auth_password password
+                     :x_auth_mode "client_auth"}
+        signature-base (sig/base-string (-> (:method request-config "POST")
+                                            sig/as-str upper-case)
+                                        (:access-uri consumer)
+                                        (merge oauth-params post-params))
+        signature (if secret (sig/sign consumer signature-base secret)
+                     (sig/sign consumer signature-base))
+        params (assoc oauth-params :oauth_signature signature)]
+    (build-request params post-params)))
+
 (defn build-xauth-access-token-request
   ([consumer username password nonce timestamp]
-   (build-xauth-access-token-request consumer nil username password nonce timestamp))
+   (build-xauth-access-token-request* consumer nil username password nonce timestamp nil))
   ([consumer {token :oauth_token secret :oauth_token_secret} username password nonce timestamp]
-   (let [oauth-params (if token
-                        (sig/oauth-params consumer nonce timestamp token)
-                        (sig/oauth-params consumer nonce timestamp))
-         post-params {:x_auth_username username
-                      :x_auth_password password
-                      :x_auth_mode "client_auth"}
-         signature-base (sig/base-string "POST"
-                                         (:access-uri consumer)
-                                         (merge oauth-params
-                                                post-params))
-         signature (if secret (sig/sign consumer signature-base secret) (sig/sign consumer signature-base))
-         params (assoc oauth-params
-                       :oauth_signature signature)]
-     (build-request params post-params))))
+   (build-xauth-access-token-request* consumer {:oauth_token token
+                                                :oauth_token_secret secret}
+                                      username password nonce timestamp nil)))
 
 (defn refresh-token
   "Exchange an expired access token for a new access token."
   ([consumer expired-token]
    (refresh-token consumer expired-token nil))
   ([consumer expired-token verifier]
-   (let [base-oauth-params (if verifier
-                             (sig/oauth-params consumer
-                                               (sig/rand-str 30)
-                                               (sig/msecs->secs (System/currentTimeMillis))
-                                               (:oauth_token expired-token)
-                                               verifier)
-                             (sig/oauth-params consumer
-                                               (sig/rand-str 30)
-                                               (sig/msecs->secs (System/currentTimeMillis))
-                                               (:oauth_token expired-token)))
+   (refresh-token consumer expired-token verifier {}))
+  ([consumer expired-token verifier options]
+   (let [base-oauth-params (oauth-params-for consumer options
+                                             (:oauth_token expired-token)
+                                             verifier)
          unsigned-oauth-params (assoc base-oauth-params
                                  :oauth_session_handle (:oauth_session_handle expired-token))]
-     (post-request-body-decoded (:access-uri consumer)
-                                (build-oauth-token-request consumer
-                                                           (:access-uri consumer)
-                                                           unsigned-oauth-params
-                                                           nil
-                                                           (:oauth_token_secret expired-token))))))
+     (execute-token-request (:access-uri consumer)
+                            (build-oauth-token-request consumer
+                                                       (:access-uri consumer)
+                                                       unsigned-oauth-params
+                                                       nil
+                                                       (:oauth_token_secret expired-token)
+                                                       (:token-request options))
+                            nil
+                            options))))
 
 (defn xauth-access-token
   "Request an xAuth access token with a username and password."
-  [consumer username password]
-  (post-request-body-decoded (:access-uri consumer)
-                             (build-xauth-access-token-request consumer
-                                                               username
-                                                               password
-                                                               (sig/rand-str 30)
-                                                               (sig/msecs->secs (System/currentTimeMillis)))))
+  ([consumer username password]
+   (xauth-access-token consumer username password {}))
+  ([consumer username password options]
+   (let [[nonce timestamp] (oauth-request-values options)
+         request (build-xauth-access-token-request* consumer
+                                                     nil
+                                                     username
+                                                     password
+                                                     nonce
+                                                     timestamp
+                                                     (:token-request options))]
+     (execute-token-request (:access-uri consumer)
+                            request
+                            (:form-params request)
+                            options))))
