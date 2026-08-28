@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.9.0] - 2026-08-27
+
 ### Added
 
 - Add injectable OAuth nonce, timestamp, and clock functions for deterministic
