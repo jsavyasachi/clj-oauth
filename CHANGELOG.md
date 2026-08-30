@@ -1,5 +1,23 @@
 ## [Unreleased]
 
+## [1.10.0] - 2026-08-30
+
+### Fixed
+
+- Query parameters carried in the request URI are now included in the signature
+  base string, as RFC 5849 section 3.4.1.3.1 requires. They were previously
+  dropped, so signing `https://example.com/r?a=1` produced a signature the
+  provider rejected. Signing a URI with a query string and signing the same
+  request with those parameters passed explicitly now agree. This affects
+  `credentials`, the request/access/refresh token exchanges, and xAuth, since
+  all of them route through `base-string`; a provider whose configured endpoint
+  carries a query string was failing the token exchange itself.
+- Query parameter names and values are decoded before normalization, so they are
+  percent-encoded exactly once and sorted with the explicitly supplied
+  parameters rather than appended after them. A `+` in a query is decoded as a
+  space, matching `application/x-www-form-urlencoded`; a literal plus is still
+  expressible as `%2B`.
+
 ## [1.9.0] - 2026-08-27
 
 ### Added
