@@ -359,9 +359,12 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPwrtgkaYAbp/xzfBzcsZR/ADW1ZVsRG
   (is (= (sig/url-form-encode (sort {:hello "there" :name "Bill Smith" })) "hello=there&name=Bill%20Smith")))
 
 (deftest base-string-normalizes-request-uri
-  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&status%3Dok"
+  ;; The subject here is base string URI normalization: the scheme and host are
+  ;; lowercased, the default port is dropped, and the fragment is removed. The
+  ;; query parameter is signed rather than discarded, per RFC 5849 3.4.1.3.1.
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&q%3D1%26status%3Dok"
          (sig/base-string "GET"
-                          "HTTPS://EXAMPLE.COM:443/resource?ignored=true#fragment"
+                          "HTTPS://EXAMPLE.COM:443/resource?q=1#fragment"
                           {:status "ok"}))))
 
 (deftest url-form-encode-accepts-ordered-pairs
@@ -391,3 +394,79 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPwrtgkaYAbp/xzfBzcsZR/ADW1ZVsRG
         token-secret "token&secret"
         signature (sig/sign consumer base-string token-secret)]
     (is (sig/verify signature consumer base-string token-secret))))
+
+(deftest base-string-includes-uri-query-params
+  ;; RFC 5849 3.4.1.3.1: parameters in the request URI query component are part
+  ;; of the signature base string parameters, even though 3.4.1.2 keeps them out
+  ;; of the base string URI itself. They must be signed, never dropped.
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&a%3D1%26b%3D2%26c%3D3"
+         (sig/base-string "GET"
+                          "https://example.com/resource?b=2&a=1"
+                          {:c "3"})))
+
+  ;; The two spellings of the same request must sign identically.
+  (is (= (sig/base-string "GET" "https://example.com/resource?a=1&b=2" {})
+         (sig/base-string "GET" "https://example.com/resource" {:a "1" :b "2"})))
+
+  ;; URI query params take part in the normalized ordering, sorted in with the
+  ;; explicit params rather than appended after them.
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&a%3D1%26m%3D2%26z%3D3"
+         (sig/base-string "GET"
+                          "https://example.com/resource?z=3&a=1"
+                          {:m "2"}))))
+
+(deftest base-string-merges-uri-and-explicit-params-without-clobbering
+  ;; OAuth allows a parameter name to repeat, so a name present in both the URI
+  ;; query and the explicit params map must yield two entries, not one.
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&dup%3Da%26dup%3Dz"
+         (sig/base-string "GET"
+                          "https://example.com/resource?dup=z"
+                          [["dup" "a"]]))))
+
+(deftest base-string-normalizes-uri-query-params
+  ;; RFC 5849 3.4.1.3.2: decode the raw query, then re-encode once when building
+  ;; the normalized parameter string. No double encoding of already-encoded
+  ;; input.
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&a%2520b%3Dc%2526d"
+         (sig/base-string "GET"
+                          "https://example.com/resource?a%20b=c%26d"
+                          {})))
+
+  ;; Sorting is by encoded key, then encoded value, including the prefix case.
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&a%3Dfirst%26aa%3Dsecond"
+         (sig/base-string "GET"
+                          "https://example.com/resource?aa=second&a=first"
+                          {})))
+
+  ;; A valueless query parameter signs as an empty value.
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&flag%3D"
+         (sig/base-string "GET"
+                          "https://example.com/resource?flag"
+                          {}))))
+
+(deftest base-string-decodes-plus-in-uri-query-as-a-space
+  ;; Deliberate, not inherited: `+` in the query decodes to a space. OAuth 1.0a
+  ;; parameter normalization is defined over application/x-www-form-urlencoded,
+  ;; where `+` means space, and this reuses `url-decode`, the decoder already
+  ;; used everywhere else in this namespace. Strict RFC 3986 would instead read
+  ;; `+` as a literal plus. Consistency with the existing decoder wins.
+  ;; A literal plus is still expressible as %2B.
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&a%2520b%3Dc%2520d"
+         (sig/base-string "GET"
+                          "https://example.com/resource?a+b=c+d"
+                          {})))
+
+  (is (= "GET&https%3A%2F%2Fexample.com%2Fresource&a%3Dc%252Bd"
+         (sig/base-string "GET"
+                          "https://example.com/resource?a=c%2Bd"
+                          {}))))
+
+(deftest credentials-sign-query-params-from-the-request-uri
+  (let [consumer {:key "ck" :secret "cs" :signature-method :hmac-sha1}
+        options {:oauth-nonce-fn (fn [_] "fixednonce")
+                 :oauth-timestamp-fn (constantly 1272325550)}
+        in-uri (oc/credentials consumer "tk" "ts" :GET
+                               "https://api.example.com/r?a=1&b=2" nil options)
+        in-params (oc/credentials consumer "tk" "ts" :GET
+                                  "https://api.example.com/r" {:a "1" :b "2"} options)]
+    (is (= (:oauth_signature in-params) (:oauth_signature in-uri)))))

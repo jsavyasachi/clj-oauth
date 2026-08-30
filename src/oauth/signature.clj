@@ -11,6 +11,7 @@
          base-string
          sign
          url-encode
+         url-decode
          oauth-params)
 
 (defn- named? [a]
@@ -69,6 +70,23 @@
                               (str ":" port)))]
     (str scheme "://" authority (or (.getRawPath uri) "/"))))
 
+(defn- query-param-pairs
+  "Return the query component of a request URI as decoded key-value pairs.
+
+  RFC 5849 section 3.4.1.3.1 includes the query parameters in the set of
+  parameters that get signed, even though section 3.4.1.2 keeps them out of the
+  base string URI. Values are decoded here so that the single encoding pass in
+  `base-string` does not double-encode them."
+  [url]
+  (let [query (.getRawQuery (java.net.URI. ^String url))]
+    (if (clojure.string/blank? query)
+      []
+      (->> (clojure.string/split query #"&")
+           (remove clojure.string/blank?)
+           (map (fn [pair]
+                  (let [[k v] (clojure.string/split pair #"=" 2)]
+                    [(url-decode (or k "")) (url-decode (or v ""))])))))))
+
 (defn base-string
   ([method base-url c t params]
      (let [oauth-params {:oauth_consumer_key (:key c)
@@ -88,7 +106,11 @@
   ([method base-url params]
      (join "&" [method
                 (url-encode (base-string-uri base-url))
-                (url-encode (url-form-encode (encoded-param-pairs params)))])))
+                (url-encode
+                 (url-form-encode
+                  (encoded-param-pairs
+                   (concat (param-pairs params)
+                           (query-param-pairs base-url)))))])))
 
 (defmulti sign
   "Sign a base string for authentication."
