@@ -24,12 +24,12 @@
                 :version version
                 :basis @basis
                 :src-dirs ["src"]
-                :scm {:url "https://github.com/jsavyasachi/clj-oauth"
-                      :connection "scm:git:https://github.com/jsavyasachi/clj-oauth.git"
-                      :developerConnection "scm:git:ssh://git@github.com/jsavyasachi/clj-oauth.git"
+                :scm {:url "https://github.com/savyalabs/clj-oauth"
+                      :connection "scm:git:https://github.com/savyalabs/clj-oauth.git"
+                      :developerConnection "scm:git:ssh://git@github.com/savyalabs/clj-oauth.git"
                       :tag (str "v" version)}
                 :pom-data [[:description "OAuth support for Clojure"]
-                           [:url "https://github.com/jsavyasachi/clj-oauth"]
+                           [:url "https://github.com/savyalabs/clj-oauth"]
                            [:licenses
                             [:license
                              [:name "Simplified BSD License"]

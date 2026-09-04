@@ -2,7 +2,7 @@
 
 [![Clojars Project](https://img.shields.io/clojars/v/net.clojars.savya/clj-oauth.svg)](https://clojars.org/net.clojars.savya/clj-oauth)
 [![cljdoc](https://cljdoc.org/badge/net.clojars.savya/clj-oauth)](https://cljdoc.org/d/net.clojars.savya/clj-oauth/CURRENT)
-[![test](https://github.com/jsavyasachi/clj-oauth/actions/workflows/test.yml/badge.svg)](https://github.com/jsavyasachi/clj-oauth/actions/workflows/test.yml)
+[![test](https://github.com/savyalabs/clj-oauth/actions/workflows/test.yml/badge.svg)](https://github.com/savyalabs/clj-oauth/actions/workflows/test.yml)
 
 `clj-oauth` provides [OAuth](http://oauth.net) client support for Clojure programs.
 
